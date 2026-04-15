@@ -1,2 +1,4 @@
 * 2026-04-15
   - first decode works
+* 2026-04-15
+  - window is up
