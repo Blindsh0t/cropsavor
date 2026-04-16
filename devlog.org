@@ -2,3 +2,5 @@
   - first decode works
 * 2026-04-15
   - window is up
+* 2026-04-16
+  - click and drag feels right
