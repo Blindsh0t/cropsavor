@@ -4,3 +4,5 @@
   - window is up
 * 2026-04-16
   - click and drag feels right
+* 2026-04-16
+  - redrawing every frame is fine for now
