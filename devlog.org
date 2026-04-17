@@ -8,3 +8,5 @@
   - redrawing every frame is fine for now
 * 2026-04-17
   - radius is just pythagoras
+* 2026-04-17
+  - first saved circle, edge is jagged
