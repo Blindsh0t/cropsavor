@@ -6,3 +6,5 @@
   - click and drag feels right
 * 2026-04-16
   - redrawing every frame is fine for now
+* 2026-04-17
+  - radius is just pythagoras
