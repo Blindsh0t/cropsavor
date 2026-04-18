@@ -10,3 +10,5 @@
   - radius is just pythagoras
 * 2026-04-17
   - first saved circle, edge is jagged
+* 2026-04-18
+  - preview is much easier to aim now
