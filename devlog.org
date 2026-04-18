@@ -12,3 +12,5 @@
   - first saved circle, edge is jagged
 * 2026-04-18
   - preview is much easier to aim now
+* 2026-04-18
+  - week one wrap up
