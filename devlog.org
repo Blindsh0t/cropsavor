@@ -16,3 +16,5 @@
   - week one wrap up
 * 2026-08-12
   - shared codec builds
+* 2026-08-13
+  - c loads the same jpeg
