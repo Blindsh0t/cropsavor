@@ -1,5 +1,6 @@
 /target
+/circular-img.egg-info
 
-# Shared codec build artifacts
-/common/*.o
-/common/libcodec.a
+# C build artifacts
+/c/circular-img-c
+/c/build
