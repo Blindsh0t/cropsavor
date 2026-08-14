@@ -18,3 +18,5 @@
   - shared codec builds
 * 2026-08-13
   - c loads the same jpeg
+* 2026-08-14
+  - c saves a circle from the command line
