@@ -20,3 +20,5 @@
   - c loads the same jpeg
 * 2026-08-14
   - c saves a circle from the command line
+* 2026-08-15
+  - sdl2 window works on arm64
