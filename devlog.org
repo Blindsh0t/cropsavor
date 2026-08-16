@@ -22,3 +22,5 @@
   - c saves a circle from the command line
 * 2026-08-15
   - sdl2 window works on arm64
+* 2026-08-16
+  - c preview matches rust
