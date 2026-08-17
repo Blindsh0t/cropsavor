@@ -24,3 +24,5 @@
   - sdl2 window works on arm64
 * 2026-08-16
   - c preview matches rust
+* 2026-08-17
+  - ffi to the c codec works
