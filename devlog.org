@@ -26,3 +26,5 @@
   - c preview matches rust
 * 2026-08-17
   - ffi to the c codec works
+* 2026-08-18
+  - timing is dominated by the codec
