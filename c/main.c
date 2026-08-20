@@ -164,18 +164,42 @@ static int env_int(const char *name, int fallback) {
 
 static int run_headless(const char *input_path, float cx, float cy,
                         float radius) {
+    int timing = getenv("CIRCULAR_TIMING") != NULL;
+    int repeat = env_int("CIRCULAR_REPEAT", 1);
+
+    struct timespec t0, t1, t2, t3;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
     CImage image = cimg_load(input_path);
+    clock_gettime(CLOCK_MONOTONIC, &t1);
 
     if (!image.rgba) {
         fprintf(stderr, "Failed to load image: %s\n", input_path);
         return 1;
     }
 
-    CImage cropped = crop_to_circle(&image, cx, cy, radius);
+    CImage cropped = {0, 0, NULL};
+
+    for (int i = 0; i < repeat; i++) {
+        cimg_free(&cropped);
+        cropped = crop_to_circle(&image, cx, cy, radius);
+    }
+    clock_gettime(CLOCK_MONOTONIC, &t2);
 
     char path[4096];
     output_path(input_path, path, sizeof(path));
     cimg_save_png(path, &cropped);
+    clock_gettime(CLOCK_MONOTONIC, &t3);
+
+    if (timing) {
+        double ms = 1e3;
+        double d0 = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;
+        double d1 = (t2.tv_sec - t1.tv_sec) + (t2.tv_nsec - t1.tv_nsec) / 1e9;
+        double d2 = (t3.tv_sec - t2.tv_sec) + (t3.tv_nsec - t2.tv_nsec) / 1e9;
+        fprintf(stderr,
+                "[c] decode %.2f ms | crop %.2f ms (%.4f ms x%d) | save %.2f ms | total %.2f ms\n",
+                d0 * ms, d1 * ms, d1 * ms / repeat, repeat, d2 * ms,
+                (d0 + d1 + d2) * ms);
+    }
 
     printf("Saved circular image to:\n%s\n", path);
 
