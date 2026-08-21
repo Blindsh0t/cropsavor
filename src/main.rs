@@ -1,13 +1,11 @@
-use image::RgbaImage;
+use image::{Rgba, RgbaImage};
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
-fn crop_to_circle(
-    source: &RgbaImage,
-    cx: f32,
-    cy: f32,
-    radius: f32,
-) -> RgbaImage {
+/// Cut a circular region out of `source`, leaving everything outside the
+/// circle transparent.
+fn crop_to_circle(source: &RgbaImage, cx: f32, cy: f32, radius: f32) -> RgbaImage {
     let (width, height) = source.dimensions();
     let mut output = source.clone();
     let radius_squared = radius * radius;
@@ -114,51 +112,53 @@ fn draw_circle_preview(
             center_x - i
         };
 
-        draw_pixel(
-            buffer,
-            width,
-            height,
-            x,
-            center_y,
-            0x00FFCC00,
-        );
+        draw_pixel(buffer, width, height, x, center_y, 0x00FFCC00);
     }
 
     // Draw a crosshair at the fixed center.
     for offset in -8..=8 {
-        draw_pixel(
-            buffer,
-            width,
-            height,
-            center_x + offset,
-            center_y,
-            0x0000FF00,
-        );
+        draw_pixel(buffer, width, height, center_x + offset, center_y, 0x0000FF00);
 
-        draw_pixel(
-            buffer,
-            width,
-            height,
-            center_x,
-            center_y + offset,
-            0x0000FF00,
-        );
+        draw_pixel(buffer, width, height, center_x, center_y + offset, 0x0000FF00);
     }
 
     // Draw a small marker at the radius endpoint.
-    draw_pixel(
-        buffer,
-        width,
-        height,
-        end_x,
-        center_y,
-        0x00FFFFFF,
-    );
+    draw_pixel(buffer, width, height, end_x, center_y, 0x00FFFFFF);
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let input_path = Path::new("/Users/han/Desktop/wallp-1.jpg");
+/// Non-interactive mode used for benchmarking:
+///   circular-img <input> <cx> <cy> <radius>
+fn run_headless(input_path: &Path, cx: f32, cy: f32, radius: f32) -> Result<(), Box<dyn std::error::Error>> {
+    let timing = std::env::var_os("CIRCULAR_TIMING").is_some();
 
+    let t0 = Instant::now();
+    let image = image::open(input_path)?.to_rgba8();
+    let t1 = Instant::now();
+
+    let cropped = crop_to_circle(&image, cx, cy, radius);
+    let t2 = Instant::now();
+
+    let save_path = output_path(input_path);
+    cropped.save(&save_path)?;
+    let t3 = Instant::now();
+
+    if timing {
+        eprintln!(
+            "[rust] decode {:.2} ms | crop {:.2} ms | save {:.2} ms | total {:.2} ms",
+            (t1 - t0).as_secs_f64() * 1000.0,
+            (t2 - t1).as_secs_f64() * 1000.0,
+            (t3 - t2).as_secs_f64() * 1000.0,
+            (t3 - t0).as_secs_f64() * 1000.0,
+        );
+    }
+
+    println!("Saved circular image to:");
+    println!("{}", save_path.display());
+
+    Ok(())
+}
+
+fn run_interactive(input_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let image = image::open(input_path)?.to_rgba8();
     let (width, height) = image.dimensions();
 
@@ -166,7 +166,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut display_buffer = original_buffer.clone();
 
     let mut window = Window::new(
-        "Circular Crop - click and drag",
+        "Circular Crop - click and drag, Esc to exit",
         width as usize,
         height as usize,
         WindowOptions::default(),
@@ -178,9 +178,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut mouse_was_down = false;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        let mouse_position = window
-            .get_mouse_pos(MouseMode::Clamp)
-            .unwrap_or((0.0, 0.0));
+        let mouse_position = window.get_mouse_pos(MouseMode::Clamp).unwrap_or((0.0, 0.0));
 
         let mouse_down = window.get_mouse_down(MouseButton::Left);
 
@@ -231,12 +229,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         mouse_was_down = mouse_down;
 
-        window.update_with_buffer(
-            &display_buffer,
-            width as usize,
-            height as usize,
-        )?;
+        window.update_with_buffer(&display_buffer, width as usize, height as usize)?;
     }
 
     Ok(())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut args = std::env::args().skip(1);
+
+    let input_path = args
+        .next()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("/Users/han/Desktop/wallp-1.jpg"));
+
+    // If center and radius are supplied, run without opening a window. This is
+    // the path used when comparing runtimes between implementations.
+    if let (Some(cx), Some(cy), Some(radius)) = (args.next(), args.next(), args.next()) {
+        let cx: f32 = cx.parse()?;
+        let cy: f32 = cy.parse()?;
+        let radius: f32 = radius.parse()?;
+
+        return run_headless(&input_path, cx, cy, radius);
+    }
+
+    run_interactive(&input_path)
 }
