@@ -34,3 +34,5 @@
   - repeat makes the crop visible
 * 2026-08-21
   - one binary, two modes
+* 2026-08-22
+  - compared file sizes of the pngs
