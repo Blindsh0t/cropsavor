@@ -36,3 +36,5 @@
   - one binary, two modes
 * 2026-08-22
   - compared file sizes of the pngs
+* 2026-08-22
+  - all three outputs are byte identical
