@@ -40,3 +40,5 @@
   - all three outputs are byte identical
 * 2026-08-23
   - writing the results down
+* 2026-08-23
+  - thinking about the edge
