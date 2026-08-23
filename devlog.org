@@ -38,3 +38,5 @@
   - compared file sizes of the pngs
 * 2026-08-22
   - all three outputs are byte identical
+* 2026-08-23
+  - writing the results down
