@@ -44,3 +44,5 @@
   - thinking about the edge
 * 2026-08-24
   - a hard alpha cutoff is the jagged part
+* 2026-08-24
+  - coverage is the fix
