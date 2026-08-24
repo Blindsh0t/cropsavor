@@ -42,3 +42,5 @@
   - writing the results down
 * 2026-08-23
   - thinking about the edge
+* 2026-08-24
+  - a hard alpha cutoff is the jagged part
