@@ -48,3 +48,5 @@
   - coverage is the fix
 * 2026-08-25
   - one pixel of ramp is enough
+* 2026-08-25
+  - check the transparent margin
