@@ -46,3 +46,5 @@
   - a hard alpha cutoff is the jagged part
 * 2026-08-24
   - coverage is the fix
+* 2026-08-25
+  - one pixel of ramp is enough
