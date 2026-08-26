@@ -52,3 +52,5 @@
   - check the transparent margin
 * 2026-08-26
   - centering is nicer in a photo viewer
+* 2026-08-26
+  - ten percent margin looks right
