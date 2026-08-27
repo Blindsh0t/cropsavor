@@ -54,3 +54,5 @@
   - centering is nicer in a photo viewer
 * 2026-08-26
   - ten percent margin looks right
+* 2026-08-27
+  - re ran the benchmark after the crop change
