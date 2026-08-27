@@ -56,3 +56,5 @@
   - ten percent margin looks right
 * 2026-08-27
   - re ran the benchmark after the crop change
+* 2026-08-27
+  - crop cost unchanged, save still dominates
