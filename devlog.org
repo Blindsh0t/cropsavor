@@ -60,3 +60,5 @@
   - crop cost unchanged, save still dominates
 * 2026-08-28
   - warm up runs matter on macos
+* 2026-08-28
+  - codesign stall was a 600ms outlier
