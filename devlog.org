@@ -64,3 +64,5 @@
   - codesign stall was a 600ms outlier
 * 2026-08-29
   - checking the numbers twice
+* 2026-08-29
+  - nim is last on the loop but close overall
