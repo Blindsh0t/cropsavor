@@ -62,3 +62,5 @@
   - warm up runs matter on macos
 * 2026-08-28
   - codesign stall was a 600ms outlier
+* 2026-08-29
+  - checking the numbers twice
