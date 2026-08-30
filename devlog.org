@@ -66,3 +66,5 @@
   - checking the numbers twice
 * 2026-08-29
   - nim is last on the loop but close overall
+* 2026-08-30
+  - bounds checks explain most of rust gap
