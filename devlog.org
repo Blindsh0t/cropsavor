@@ -68,3 +68,5 @@
   - nim is last on the loop but close overall
 * 2026-08-30
   - bounds checks explain most of rust gap
+* 2026-08-30
+  - unsafe indexing closes the gap
