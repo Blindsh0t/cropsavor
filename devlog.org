@@ -72,3 +72,5 @@
   - unsafe indexing closes the gap
 * 2026-08-31
   - keeping safe rust in the repo
+* 2026-08-31
+  - last week of the project
