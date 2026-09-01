@@ -76,3 +76,5 @@
   - last week of the project
 * 2026-09-01
   - re reading the whole codebase
+* 2026-09-01
+  - cleaning up comments
