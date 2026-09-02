@@ -80,3 +80,5 @@
   - cleaning up comments
 * 2026-09-02
   - making sure each port has the same options
+* 2026-09-02
+  - checking the makefiles
