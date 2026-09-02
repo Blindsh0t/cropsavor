@@ -78,3 +78,5 @@
   - re reading the whole codebase
 * 2026-09-01
   - cleaning up comments
+* 2026-09-02
+  - making sure each port has the same options
