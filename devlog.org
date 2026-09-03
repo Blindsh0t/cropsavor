@@ -82,3 +82,5 @@
   - making sure each port has the same options
 * 2026-09-02
   - checking the makefiles
+* 2026-09-03
+  - re running the clean build
