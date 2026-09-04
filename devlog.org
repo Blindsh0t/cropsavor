@@ -88,3 +88,5 @@
   - verifying the outputs again
 * 2026-09-04
   - writing the readme outline
+* 2026-09-04
+  - keeping the readme short
