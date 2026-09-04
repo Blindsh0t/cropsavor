@@ -86,3 +86,5 @@
   - re running the clean build
 * 2026-09-03
   - verifying the outputs again
+* 2026-09-04
+  - writing the readme outline
