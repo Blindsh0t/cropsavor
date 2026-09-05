@@ -90,3 +90,5 @@
   - writing the readme outline
 * 2026-09-04
   - keeping the readme short
+* 2026-09-05
+  - drafting the results table
