@@ -5,19 +5,24 @@ use std::time::Instant;
 
 /// Cut a circular region out of `source`, leaving everything outside the
 /// circle transparent.
+///
+/// The edge is anti-aliased: each output pixel gets a coverage value based on
+/// how far it lies from the circle boundary.
 fn crop_to_circle(source: &RgbaImage, cx: f32, cy: f32, radius: f32) -> RgbaImage {
     let (width, height) = source.dimensions();
     let mut output = source.clone();
-    let radius_squared = radius * radius;
 
     for y in 0..height {
         for x in 0..width {
-            let dx = x as f32 - cx;
-            let dy = y as f32 - cy;
+            let dx = x as f32 + 0.5 - cx;
+            let dy = y as f32 + 0.5 - cy;
 
-            if dx * dx + dy * dy > radius_squared {
-                output.get_pixel_mut(x, y).0[3] = 0;
-            }
+            let distance = (dx * dx + dy * dy).sqrt();
+
+            let coverage = (radius - distance + 0.5).clamp(0.0, 1.0);
+
+            let pixel = output.get_pixel_mut(x, y);
+            pixel.0[3] = (pixel.0[3] as f32 * coverage).round() as u8;
         }
     }
 
