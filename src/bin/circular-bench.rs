@@ -43,7 +43,7 @@ impl Drop for CodecImage {
     }
 }
 
-// Same crop as the other ports, hard-edged (no anti-aliasing yet).
+// Same crop as the other ports: anti-aliased full-frame mask.
 fn crop_to_circle(source: &CImage, cx: f32, cy: f32, radius: f32) -> (Vec<u8>, usize) {
     let source_width = source.width as usize;
     let source_height = source.height as usize;
@@ -54,18 +54,19 @@ fn crop_to_circle(source: &CImage, cx: f32, cy: f32, radius: f32) -> (Vec<u8>, u
 
     for y in 0..source_height {
         for x in 0..source_width {
-            let dx = x as f32 - cx;
-            let dy = y as f32 - cy;
+            let dx = x as f32 + 0.5 - cx;
+            let dy = y as f32 + 0.5 - cy;
 
-            if dx * dx + dy * dy > radius * radius {
-                continue;
-            }
+            let distance = (dx * dx + dy * dy).sqrt();
+
+            let coverage = (radius - distance + 0.5).clamp(0.0, 1.0);
 
             let dest_offset = (y * size + x) * 4;
             output[dest_offset] = source_pixels[dest_offset];
             output[dest_offset + 1] = source_pixels[dest_offset + 1];
             output[dest_offset + 2] = source_pixels[dest_offset + 2];
-            output[dest_offset + 3] = source_pixels[dest_offset + 3];
+            output[dest_offset + 3] =
+                (source_pixels[dest_offset + 3] as f32 * coverage).round() as u8;
         }
     }
 
