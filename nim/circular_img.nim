@@ -32,7 +32,7 @@ proc outputPath(inputPath: string): string =
 proc ms(start, finish: MonoTime): float =
   float((finish - start).inNanoseconds) / 1e6
 
-# Cut a circle out of the source, hard-edged (no anti-aliasing yet).
+# Cut a circle out of the source with an anti-aliased edge.
 proc cropToCircle(source: CImage; cx, cy, radius: float32): tuple[pixels: ptr uint8, size: int] =
   let size = int(source.width)
   let buffer = cast[ptr UncheckedArray[uint8]](alloc0(size * size * 4))
@@ -40,17 +40,23 @@ proc cropToCircle(source: CImage; cx, cy, radius: float32): tuple[pixels: ptr ui
 
   for y in 0 ..< size:
     for x in 0 ..< size:
-      let dx = float32(x) - cx
-      let dy = float32(y) - cy
+      let dx = float32(x) + 0.5'f32 - cx
+      let dy = float32(y) + 0.5'f32 - cy
 
-      if dx * dx + dy * dy > radius * radius:
+      let distance = sqrt(dx * dx + dy * dy)
+
+      var coverage = radius - distance + 0.5'f32
+      if coverage < 0.0'f32: coverage = 0.0'f32
+      if coverage > 1.0'f32: coverage = 1.0'f32
+
+      if coverage <= 0.0'f32:
         continue
 
       let offset = (y * size + x) * 4
       buffer[offset] = src[offset]
       buffer[offset + 1] = src[offset + 1]
       buffer[offset + 2] = src[offset + 2]
-      buffer[offset + 3] = src[offset + 3]
+      buffer[offset + 3] = uint8(round(float32(src[offset + 3]) * coverage))
 
   result = (cast[ptr uint8](buffer), size)
 
