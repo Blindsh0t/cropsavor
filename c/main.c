@@ -49,23 +49,26 @@ static void output_path(const char *input_path, char *out, size_t out_size) {
 // ---------------------------------------------------------------------------
 
 // Cut a circular region out of `source`, leaving everything outside the
-// circle transparent.
+// circle transparent. The edge is anti-aliased with per-pixel coverage.
 static CImage crop_to_circle(const CImage *source, float cx, float cy,
                              float radius) {
     CImage output = {source->width, source->height, NULL};
     output.rgba = malloc((size_t)output.width * output.height * 4);
     memcpy(output.rgba, source->rgba, (size_t)output.width * output.height * 4);
 
-    float radius_squared = radius * radius;
-
     for (int y = 0; y < output.height; y++) {
         for (int x = 0; x < output.width; x++) {
-            float dx = (float)x - cx;
-            float dy = (float)y - cy;
+            float dx = (float)x + 0.5f - cx;
+            float dy = (float)y + 0.5f - cy;
 
-            if (dx * dx + dy * dy > radius_squared) {
-                output.rgba[((size_t)y * output.width + x) * 4 + 3] = 0;
-            }
+            float distance = sqrtf(dx * dx + dy * dy);
+
+            float coverage = radius - distance + 0.5f;
+            if (coverage < 0.0f) coverage = 0.0f;
+            if (coverage > 1.0f) coverage = 1.0f;
+
+            unsigned char *pixel = &output.rgba[((size_t)y * output.width + x) * 4];
+            pixel[3] = (unsigned char)lroundf((float)pixel[3] * coverage);
         }
     }
 
