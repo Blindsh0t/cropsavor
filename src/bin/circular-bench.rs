@@ -43,30 +43,57 @@ impl Drop for CodecImage {
     }
 }
 
-// Same crop as the other ports: anti-aliased full-frame mask.
+// Same crop as the other ports: anti-aliased circular mask pasted onto a
+// square transparent canvas with a 10% margin. Returns the pixels and the
+// square canvas size.
 fn crop_to_circle(source: &CImage, cx: f32, cy: f32, radius: f32) -> (Vec<u8>, usize) {
     let source_width = source.width as usize;
     let source_height = source.height as usize;
     let source_pixels = source.pixels();
 
-    let size = source_width;
+    let diameter = radius * 2.0;
+    let padding = (diameter * 0.1).ceil();
+    let size = (diameter + padding * 2.0).ceil() as usize + 2;
+
     let mut output = vec![0u8; size * size * 4];
 
-    for y in 0..source_height {
-        for x in 0..source_width {
-            let dx = x as f32 + 0.5 - cx;
-            let dy = y as f32 + 0.5 - cy;
+    let half = size as f32 / 2.0;
+
+    for y in 0..size {
+        for x in 0..size {
+            let source_x = cx + (x as f32 + 0.5 - half);
+            let source_y = cy + (y as f32 + 0.5 - half);
+
+            let dx = source_x - cx;
+            let dy = source_y - cy;
 
             let distance = (dx * dx + dy * dy).sqrt();
 
             let coverage = (radius - distance + 0.5).clamp(0.0, 1.0);
 
+            if coverage <= 0.0 {
+                continue;
+            }
+
+            let source_ix = source_x.floor() as i32;
+            let source_iy = source_y.floor() as i32;
+
+            if source_ix < 0
+                || source_iy < 0
+                || source_ix >= source_width as i32
+                || source_iy >= source_height as i32
+            {
+                continue;
+            }
+
+            let source_offset = (source_iy as usize * source_width + source_ix as usize) * 4;
             let dest_offset = (y * size + x) * 4;
-            output[dest_offset] = source_pixels[dest_offset];
-            output[dest_offset + 1] = source_pixels[dest_offset + 1];
-            output[dest_offset + 2] = source_pixels[dest_offset + 2];
+
+            output[dest_offset] = source_pixels[source_offset];
+            output[dest_offset + 1] = source_pixels[source_offset + 1];
+            output[dest_offset + 2] = source_pixels[source_offset + 2];
             output[dest_offset + 3] =
-                (source_pixels[dest_offset + 3] as f32 * coverage).round() as u8;
+                (source_pixels[source_offset + 3] as f32 * coverage).round() as u8;
         }
     }
 
