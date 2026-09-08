@@ -3,26 +3,61 @@ use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-/// Cut a circular region out of `source`, leaving everything outside the
-/// circle transparent.
+/// Cut a circular region out of `source` and paste it into a transparent,
+/// square canvas so the circle sits exactly in the middle.
 ///
 /// The edge is anti-aliased: each output pixel gets a coverage value based on
-/// how far it lies from the circle boundary.
+/// how far it lies from the circle boundary, which removes the hard, jagged
+/// staircase you get from a plain inside/outside alpha cutoff.
 fn crop_to_circle(source: &RgbaImage, cx: f32, cy: f32, radius: f32) -> RgbaImage {
-    let (width, height) = source.dimensions();
-    let mut output = source.clone();
+    let (source_width, source_height) = source.dimensions();
 
-    for y in 0..height {
-        for x in 0..width {
-            let dx = x as f32 + 0.5 - cx;
-            let dy = y as f32 + 0.5 - cy;
+    // Square canvas that fits the circle, plus a transparent margin so the
+    // circle visibly sits in the middle of an empty square.
+    let diameter = radius * 2.0;
+    let padding = (diameter * 0.1).ceil();
+    let size = (diameter + padding * 2.0).ceil() as u32 + 2;
+
+    let mut output = RgbaImage::new(size, size);
+
+    let half = size as f32 / 2.0;
+
+    for y in 0..size {
+        for x in 0..size {
+            // Map this output pixel back into source coordinates, keeping the
+            // selected center at the center of the new square.
+            let source_x = cx + (x as f32 + 0.5 - half);
+            let source_y = cy + (y as f32 + 0.5 - half);
+
+            let dx = source_x - cx;
+            let dy = source_y - cy;
 
             let distance = (dx * dx + dy * dy).sqrt();
 
+            // Coverage ramps from 1 fully inside to 0 fully outside across a
+            // single pixel, giving a smooth edge.
             let coverage = (radius - distance + 0.5).clamp(0.0, 1.0);
 
-            let pixel = output.get_pixel_mut(x, y);
-            pixel.0[3] = (pixel.0[3] as f32 * coverage).round() as u8;
+            if coverage <= 0.0 {
+                continue;
+            }
+
+            let source_ix = source_x.floor() as i32;
+            let source_iy = source_y.floor() as i32;
+
+            if source_ix < 0
+                || source_iy < 0
+                || source_ix >= source_width as i32
+                || source_iy >= source_height as i32
+            {
+                continue;
+            }
+
+            let pixel = source.get_pixel(source_ix as u32, source_iy as u32);
+
+            let alpha = (pixel.0[3] as f32 * coverage).round() as u8;
+
+            output.put_pixel(x, y, Rgba([pixel.0[0], pixel.0[1], pixel.0[2], alpha]));
         }
     }
 
