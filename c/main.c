@@ -48,27 +48,66 @@ static void output_path(const char *input_path, char *out, size_t out_size) {
 // Circular crop
 // ---------------------------------------------------------------------------
 
-// Cut a circular region out of `source`, leaving everything outside the
-// circle transparent. The edge is anti-aliased with per-pixel coverage.
+// Cut a circular region out of `source` and paste it into a transparent,
+// square canvas so the circle sits exactly in the middle. The edge is
+// anti-aliased via per-pixel coverage of the circle boundary.
 static CImage crop_to_circle(const CImage *source, float cx, float cy,
                              float radius) {
-    CImage output = {source->width, source->height, NULL};
-    output.rgba = malloc((size_t)output.width * output.height * 4);
-    memcpy(output.rgba, source->rgba, (size_t)output.width * output.height * 4);
+    // Square canvas that fits the circle, plus a transparent margin so the
+    // circle visibly sits in the middle of an empty square.
+    float diameter = radius * 2.0f;
+    float padding = ceilf(diameter * 0.1f);
+    int size = (int)ceilf(diameter + padding * 2.0f) + 2;
 
-    for (int y = 0; y < output.height; y++) {
-        for (int x = 0; x < output.width; x++) {
-            float dx = (float)x + 0.5f - cx;
-            float dy = (float)y + 0.5f - cy;
+    CImage output = {size, size, NULL};
+    output.rgba = calloc((size_t)size * size * 4, 1);
+
+    if (!output.rgba) {
+        fprintf(stderr, "Out of memory\n");
+        exit(1);
+    }
+
+    float half = (float)size / 2.0f;
+
+    for (int y = 0; y < size; y++) {
+        for (int x = 0; x < size; x++) {
+            // Map this output pixel back into source coordinates, keeping the
+            // selected center at the center of the new square.
+            float source_x = cx + ((float)x + 0.5f - half);
+            float source_y = cy + ((float)y + 0.5f - half);
+
+            float dx = source_x - cx;
+            float dy = source_y - cy;
 
             float distance = sqrtf(dx * dx + dy * dy);
 
+            // Coverage ramps from 1 fully inside to 0 fully outside across a
+            // single pixel, giving a smooth edge.
             float coverage = radius - distance + 0.5f;
             if (coverage < 0.0f) coverage = 0.0f;
             if (coverage > 1.0f) coverage = 1.0f;
 
-            unsigned char *pixel = &output.rgba[((size_t)y * output.width + x) * 4];
-            pixel[3] = (unsigned char)lroundf((float)pixel[3] * coverage);
+            if (coverage <= 0.0f) {
+                continue;
+            }
+
+            int source_ix = (int)floorf(source_x);
+            int source_iy = (int)floorf(source_y);
+
+            if (source_ix < 0 || source_iy < 0 || source_ix >= source->width ||
+                source_iy >= source->height) {
+                continue;
+            }
+
+            const unsigned char *pixel =
+                &source->rgba[((size_t)source_iy * source->width + source_ix) * 4];
+
+            unsigned char *out = &output.rgba[((size_t)y * size + x) * 4];
+
+            out[0] = pixel[0];
+            out[1] = pixel[1];
+            out[2] = pixel[2];
+            out[3] = (unsigned char)lroundf((float)pixel[3] * coverage);
         }
     }
 
