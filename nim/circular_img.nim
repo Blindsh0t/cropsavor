@@ -32,16 +32,25 @@ proc outputPath(inputPath: string): string =
 proc ms(start, finish: MonoTime): float =
   float((finish - start).inNanoseconds) / 1e6
 
-# Cut a circle out of the source with an anti-aliased edge.
+# Same crop as the other ports: anti-aliased circular mask pasted onto a
+# square transparent canvas with a 10% margin.
 proc cropToCircle(source: CImage; cx, cy, radius: float32): tuple[pixels: ptr uint8, size: int] =
-  let size = int(source.width)
+  let diameter = radius * 2.0'f32
+  let padding = ceil(diameter * 0.1'f32)
+  let size = int(ceil(diameter + padding * 2.0'f32)) + 2
+
   let buffer = cast[ptr UncheckedArray[uint8]](alloc0(size * size * 4))
   let src = cast[ptr UncheckedArray[uint8]](source.rgba)
 
+  let half = float32(size) / 2.0'f32
+
   for y in 0 ..< size:
     for x in 0 ..< size:
-      let dx = float32(x) + 0.5'f32 - cx
-      let dy = float32(y) + 0.5'f32 - cy
+      let sourceX = cx + (float32(x) + 0.5'f32 - half)
+      let sourceY = cy + (float32(y) + 0.5'f32 - half)
+
+      let dx = sourceX - cx
+      let dy = sourceY - cy
 
       let distance = sqrt(dx * dx + dy * dy)
 
@@ -52,11 +61,20 @@ proc cropToCircle(source: CImage; cx, cy, radius: float32): tuple[pixels: ptr ui
       if coverage <= 0.0'f32:
         continue
 
-      let offset = (y * size + x) * 4
-      buffer[offset] = src[offset]
-      buffer[offset + 1] = src[offset + 1]
-      buffer[offset + 2] = src[offset + 2]
-      buffer[offset + 3] = uint8(round(float32(src[offset + 3]) * coverage))
+      let sourceIx = int(floor(sourceX))
+      let sourceIy = int(floor(sourceY))
+
+      if sourceIx < 0 or sourceIy < 0 or sourceIx >= int(source.width) or
+          sourceIy >= int(source.height):
+        continue
+
+      let srcOffset = (sourceIy * int(source.width) + sourceIx) * 4
+      let dstOffset = (y * size + x) * 4
+
+      buffer[dstOffset] = src[srcOffset]
+      buffer[dstOffset + 1] = src[srcOffset + 1]
+      buffer[dstOffset + 2] = src[srcOffset + 2]
+      buffer[dstOffset + 3] = uint8(round(float32(src[srcOffset + 3]) * coverage))
 
   result = (cast[ptr uint8](buffer), size)
 
