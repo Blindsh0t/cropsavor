@@ -1,0 +1,24 @@
+#+TITLE: cropsavor
+#+OPTIONS: num:nil
+
+cropsavor is a small image tool. you pick an image, drag a circle over it, and
+it saves just that circle as a =png= with a smooth edge.
+
+we wrote the same tool three times - in =c=, =rust= and =nim= - to find out
+which language does the job fastest.
+
+* what it does
+- opens a jpeg or png
+- lets you click and drag a circle
+- cuts the circle out and saves it as =<name>_circular.png=
+
+* how to run it
+#+begin_src shell
+cargo run --release -- /path/to/image.jpg
+#+end_src
+click and drag to choose the circle. release to save.
+
+* the three versions
+- =c/= uses =stb_image= behind a small shared codec, plus =SDL2= for the window
+- =src/= is the rust version, using =minifb= for the window
+- =nim/= is the nim version, calling the same c codec
