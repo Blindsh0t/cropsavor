@@ -94,3 +94,5 @@
   - drafting the results table
 * 2026-09-05
   - one more benchmark pass
+* 2026-09-10
+  - final checks
