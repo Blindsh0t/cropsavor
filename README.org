@@ -2,23 +2,68 @@
 #+OPTIONS: num:nil
 
 cropsavor is a small image tool. you pick an image, drag a circle over it, and
-it saves just that circle as a =png= with a smooth edge.
+it saves just that circle as a =png= with a smooth edge, centered on a
+transparent square.
 
-we wrote the same tool three times - in =c=, =rust= and =nim= - to find out
-which language does the job fastest.
+we wrote the exact same tool three times - in =c=, =rust= and =nim= - to see
+which language does the job fastest. same maths, same image codec, three
+languages. the whole story is in =devlog.org=.
 
 * what it does
 - opens a jpeg or png
 - lets you click and drag a circle
-- cuts the circle out and saves it as =<name>_circular.png=
+- cuts the circle out with an anti-aliased edge
+- centers it on a square canvas with a 10 percent margin
+- writes =<name>_circular.png= next to the input
 
 * how to run it
 #+begin_src shell
 cargo run --release -- /path/to/image.jpg
 #+end_src
-click and drag to choose the circle. release to save.
+click and drag to choose the circle. release to save. =Esc= quits.
+
+there is also a head-less mode for scripts and benchmarks:
+#+begin_src shell
+./target/release/circular-bench /path/to/image.jpg 640 280 220
+#+end_src
+the last three numbers are =cx=, =cy= and =radius= in pixels.
 
 * the three versions
-- =c/= uses =stb_image= behind a small shared codec, plus =SDL2= for the window
+- =c/= uses =stb_image= behind a tiny shared codec, and =SDL2= for the window
 - =src/= is the rust version, using =minifb= for the window
 - =nim/= is the nim version, calling the same c codec
+
+all three link =common/libcodec.a=, so the image work is identical. only the
+crop loop and the language runtime differ.
+
+* the benchmark
+#+begin_src shell
+python3 bench.py
+python3 bench.py --repeat 200
+#+end_src
+the first command times the full open-crop-save run. the second repeats the
+crop 200 times so the language part is easier to see.
+
+results on an arm64 mac, 1280x720 input:
+| rank | language | end to end | crop (x200) |
+|------+----------+------------+-------------|
+|    1 | c        |   31.4 ms  |   149 ms    |
+|    2 | rust     |   31.6 ms  |   176 ms    |
+|    3 | nim      |   31.9 ms  |   187 ms    |
+
+- end to end is a tie. the png encoder costs most of the time and it is the
+  same code in all three.
+- the crop loop alone ranks =c= first, =rust= second, =nim= third.
+- rust gets closer to c if you swap the safe slice writes for unchecked ones.
+
+* what we learned
+- a benchmark is only fair if every language uses the same image codec.
+  otherwise you are measuring libraries, not languages.
+- always warm up. the first launch of a fresh binary on macos can stall while
+  the os checks its signature.
+
+* my pick
+i would pick =rust= for a tool like this. it is as fast as c in the real
+open-save run, and the type system plus =cargo= make it much harder to write
+a memory bug. i would only reach for =c= if the crop loop itself had to be as
+fast as possible on huge images or video.
