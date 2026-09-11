@@ -96,3 +96,5 @@
   - one more benchmark pass
 * 2026-09-10
   - final checks
+* 2026-09-11
+  - ship it
