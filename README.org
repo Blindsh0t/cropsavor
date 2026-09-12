@@ -16,17 +16,45 @@ languages. the whole story is in =devlog.org=.
 - centers it on a square canvas with a 10 percent margin
 - writes =<name>_circular.png= next to the input
 
-* how to run it
+* get the code
 #+begin_src shell
-cargo run --release -- /path/to/image.jpg
+git clone https://github.com/Blindsh0t/cropsavor.git
+cd cropsavor
 #+end_src
+
+* build it
+the shared codec builds by itself the first time. to build everything:
+#+begin_src shell
+cargo build --release   # rust  -> target/release/circular-img
+make -C c               # c     -> c/circular-img-c
+make -C nim             # nim   -> nim/circular-img
+#+end_src
+if you only want the rust tool, =cargo build --release= is enough.
+
+=make -C c= needs =SDL2=. if pkg-config cannot find a matching sdl2, the
+makefile calls =c/setup_sdl2.sh= to build one from a copy already on the
+machine. you can point it at your own with
+=SDL2_DYLIB=/path/to/libSDL2-2.0.0.dylib=.
+
+* run the rust tool
+#+begin_src shell
+cargo run --release --bin circular-img -- /path/to/image.jpg
+#+end_src
+short form =cargo run --release -- /path/to/image.jpg= works too, because the
+crate sets =default-run = "circular-img"= so cargo knows which of the two
+binaries you mean.
+
 click and drag to choose the circle. release to save. =Esc= quits.
 
-there is also a head-less mode for scripts and benchmarks:
+* run head-less
+handy for scripts and for the benchmark. the last three numbers are =cx=,
+=cy= and =radius= in pixels:
 #+begin_src shell
 ./target/release/circular-bench /path/to/image.jpg 640 280 220
+./c/circular-bench-c            /path/to/image.jpg 640 280 220
+./nim/circular-img              /path/to/image.jpg 640 280 220
 #+end_src
-the last three numbers are =cx=, =cy= and =radius= in pixels.
+add =CIRCULAR_TIMING=1= in front to print a decode / crop / save breakdown.
 
 * the three versions
 - =c/= uses =stb_image= behind a tiny shared codec, and =SDL2= for the window
@@ -42,7 +70,8 @@ python3 bench.py
 python3 bench.py --repeat 200
 #+end_src
 the first command times the full open-crop-save run. the second repeats the
-crop 200 times so the language part is easier to see.
+crop 200 times so the language part is easier to see. build all three ports
+first, otherwise a language will just be skipped.
 
 results on an arm64 mac, 1280x720 input:
 | rank | language | end to end | crop (x200) |
