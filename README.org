@@ -73,6 +73,8 @@ the first command times the full open-crop-save run. the second repeats the
 crop 200 times so the language part is easier to see. build all three ports
 first, otherwise a language will just be skipped.
 
+the methodology and the raw per-phase numbers live in =docs/benchmark.md=.
+
 results on an arm64 mac, 1280x720 input:
 | rank | language | end to end | crop (x200) |
 |------+----------+------------+-------------|
